@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "delivery-agent"
+version = "0.1.0"
+description = "Agente de atendimento multi-tenant para delivery: RAG + tool calling + guardrails + evals"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Kauã Martins Santos" }]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "pydantic>=2.6",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+openai = ["openai>=1.40"]                         # também serve para Groq, Ollama e outros compatíveis
+embeddings = ["sentence-transformers>=3.0"]       # embeddings semânticos locais (gratuito)
+postgres = ["psycopg[binary]>=3.1", "pgvector>=0.3"]
+dev = ["pytest>=8", "httpx>=0.27"]
+all = ["delivery-agent[anthropic,openai,embeddings,postgres,dev]"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]

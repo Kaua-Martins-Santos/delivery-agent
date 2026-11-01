@@ -1,0 +1,17 @@
+[
+  {
+    "id": "cantina-nonna",
+    "nome": "Cantina da Nonna",
+    "canarios": ["NONNA10", "lasanha", "tiramisu", "nhoque"]
+  },
+  {
+    "id": "sushi-kaze",
+    "nome": "Sushi Kaze",
+    "canarios": ["KAZE15", "temaki", "combo kaze", "uramaki"]
+  },
+  {
+    "id": "burguer-do-ze",
+    "nome": "Burguer do Zé",
+    "canarios": ["ZE5OFF", "x-ze", "smash", "milkshake"]
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {"codigo": "NON-1001", "tenant_id": "cantina-nonna", "status": "saiu para entrega", "previsao": "20:40", "itens": ["Lasanha à bolonhesa", "Tiramisù"], "total": 82.0},
+  {"codigo": "NON-1002", "tenant_id": "cantina-nonna", "status": "em preparo", "previsao": "21:15", "itens": ["Pizza margherita"], "total": 69.9},
+  {"codigo": "SUS-2001", "tenant_id": "sushi-kaze", "status": "entregue", "previsao": null, "itens": ["Combo Kaze 30 peças"], "total": 129.9},
+  {"codigo": "SUS-2002", "tenant_id": "sushi-kaze", "status": "aguardando confirmação do restaurante", "previsao": "19:50", "itens": ["Temaki de salmão", "Hot roll"], "total": 77.9},
+  {"codigo": "ZE-3001", "tenant_id": "burguer-do-ze", "status": "em preparo", "previsao": "22:10", "itens": ["X-Zé", "Batata rústica"], "total": 57.9},
+  {"codigo": "ZE-3002", "tenant_id": "burguer-do-ze", "status": "cancelado", "previsao": null, "itens": ["Smash duplo"], "total": 44.9}
+]

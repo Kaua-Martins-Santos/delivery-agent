@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testes-e-evals:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: delivery
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d delivery"
+          --health-interval 3s --health-retries 20
+    env:
+      LLM_PROVIDER: fake
+      EMBEDDER: hash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,postgres]"
+
+      - name: Testes unitários (offline)
+        run: pytest -q
+
+      - name: Sobe schema com RLS e ingere dados
+        env:
+          PGPASSWORD: postgres
+          STORE: postgres
+          DATABASE_URL: postgresql://app_user:app_user_dev@localhost:5432/delivery
+        run: |
+          psql -h localhost -U postgres -d delivery -v ON_ERROR_STOP=1 -f db/init.sql
+          python -m delivery_agent.ingest
+
+      - name: Testes de integração do Row-Level Security
+        env:
+          TEST_DATABASE_URL: postgresql://app_user:app_user_dev@localhost:5432/delivery
+        run: pytest -q tests/test_pg_rls.py
+
+      - name: "Evals (gate: zero vazamento e acerto mínimo)"
+        env:
+          STORE: postgres
+          DATABASE_URL: postgresql://app_user:app_user_dev@localhost:5432/delivery
+        run: python -m evals.run_evals --min-pass-rate 0.85 --max-leaks 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relatorio-evals
+          path: evals/reports/
