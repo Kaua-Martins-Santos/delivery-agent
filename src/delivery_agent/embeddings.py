@@ -3,9 +3,11 @@
 - HashEmbedder: determinístico e sem download (palavras + n-gramas de caracteres com hashing).
   É o baseline usado nos testes e no CI.
 - LocalEmbedder: sentence-transformers multilíngue (semântico, roda local e de graça).
-- E5Embedder: intfloat/multilingual-e5-small, que exige prefixos "query: " / "passage: ".
+- E5Embedder: família multilingual-e5 (padrão: small), que exige prefixos "query: " / "passage: ".
 
-Todos geram vetores de 384 dimensões para caber na mesma coluna do pgvector.
+Por padrão todos geram vetores de 384 dimensões, que cabem na coluna do pgvector. O E5_MODEL
+pode apontar para modelos maiores (ex.: multilingual-e5-base, 768 dim) só para comparação:
+esses vetores funcionam no InMemoryStore, mas NÃO cabem na coluna vector(384) do Postgres.
 
 Perguntas e documentos têm métodos separados (embed_query / embed_documents) porque
 alguns modelos (E5) tratam os dois lados de forma assimétrica.
@@ -14,6 +16,7 @@ alguns modelos (E5) tratam os dois lados de forma assimétrica.
 from __future__ import annotations
 
 import hashlib
+import os
 from typing import Protocol
 
 import numpy as np
@@ -21,6 +24,17 @@ import numpy as np
 from .text import tokenize
 
 DIM = 384
+E5_DEFAULT_MODEL = "intfloat/multilingual-e5-small"
+
+
+def _device() -> str:
+    """GPU se houver (Kaggle, Colab), senão CPU."""
+    try:
+        import torch
+
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except ImportError:
+        return "cpu"
 
 
 class Embedder(Protocol):
@@ -76,7 +90,7 @@ class LocalEmbedder(_SymmetricMixin):
     def __init__(self) -> None:
         from sentence_transformers import SentenceTransformer  # import tardio: dependência opcional
 
-        self._model = SentenceTransformer(f"sentence-transformers/{self.name}")
+        self._model = SentenceTransformer(f"sentence-transformers/{self.name}", device=_device())
         self.dim = self._model.get_sentence_embedding_dimension()
 
     def embed(self, texts: list[str]) -> np.ndarray:
@@ -84,14 +98,19 @@ class LocalEmbedder(_SymmetricMixin):
 
 
 class E5Embedder:
-    """multilingual-e5-small: 384 dimensões, mas pede prefixo "query: " / "passage: "."""
+    """multilingual-e5: pede prefixo "query: " / "passage: ".
 
-    name = "multilingual-e5-small"
+    O modelo vem de E5_MODEL (padrão: small, 384 dim). O base tem 768 dim.
+    """
 
-    def __init__(self) -> None:
+    def __init__(self, model: str | None = None) -> None:
         from sentence_transformers import SentenceTransformer  # import tardio: dependência opcional
 
-        self._model = SentenceTransformer(f"intfloat/{self.name}")
+        model_id = model or os.getenv("E5_MODEL") or E5_DEFAULT_MODEL
+        if "/" not in model_id:
+            model_id = f"intfloat/{model_id}"
+        self.name = model_id.split("/")[-1]
+        self._model = SentenceTransformer(model_id, device=_device())
         self.dim = self._model.get_sentence_embedding_dimension()
 
     def _encode(self, prefix: str, texts: list[str]) -> np.ndarray:

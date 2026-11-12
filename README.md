@@ -82,14 +82,21 @@ medem se resolvem.
 
 Mesmos 40 casos, `LLM_PROVIDER=fake`, mudando só o `EMBEDDER` (`top_k=4`, store em memória).
 Relatórios completos em [`evals/reports/`](evals/reports/) (`latest-fake-<embedder>.md`).
+A latência p95 é a **média de 3 rodadas** (com 40 casos ela oscila muito); o notebook
+[`notebooks/benchmark_embeddings.ipynb`](notebooks/benchmark_embeddings.ipynb) reproduz tudo no Kaggle.
 
 | Embedder | Acerto | Recall@k | Vazamentos | Latência p95 |
 |---|---|---|---|---|
-| `hash` (n-gramas, baseline do CI) | 95% (38/40) | 95% | 0 | 1,1 ms |
-| `local` (paraphrase-multilingual-MiniLM-L12-v2) | 92% (37/40) | 90% | 0 | 47,5 ms |
-| `e5` (intfloat/multilingual-e5-small) | 95% (38/40) | **100%** | 0 | 111,3 ms |
+| `hash` (n-gramas, baseline do CI) | 95% (38/40) | 95% | 0 | 1,9 ms |
+| `local` (paraphrase-multilingual-MiniLM-L12-v2) | 92,5% (37/40) | 90% | 0 | 48,4 ms |
+| `e5` / e5-small (intfloat/multilingual-e5-small) | 95% (38/40) | **100%** | 0 | 45,4 ms |
+| e5-base (intfloat/multilingual-e5-base, 768 dim) — *só comparação* | 95% (38/40) | **100%** | 0 | 101,9 ms |
 
-Rodar: `pip install -e ".[embeddings]"` e `EMBEDDER=e5 python -m evals.run_evals`.
+O **e5-base não melhorou sobre o e5-small neste dataset** (mesmo acerto e recall, cerca de 2x a
+latência), então o **e5-small é a escolha**. O e5-base tem 768 dimensões e **não cabe** na coluna
+`vector(384)` do Postgres: roda só no `InMemoryStore` (`E5_MODEL=intfloat/multilingual-e5-base`).
+
+Rodar: `pip install -e ".[embeddings]"` e `EMBEDDER=e5 python -m evals.run_evals` (modelo em `E5_MODEL`; usa GPU se houver).
 O E5 usa o prefixo `query: ` nas perguntas e `passage: ` nos documentos (`embed_query` / `embed_documents`).
 
 **O caso `faq-20` ("até que horas fica aberto") NÃO passou em nenhum dos três.**
@@ -103,7 +110,7 @@ O E5 usa o prefixo `query: ` nas perguntas e `passage: ` nos documentos (`embed_
 Outras observações: o `e5` é o único com recall@k de 100%; o `local` piorou o recall (`faq-06` e
 `faq-11` perderam a fonte) e o `esc-03` ("estacionamento") continua sendo respondido errado pelo
 extrator fake em `hash` e `e5`. A latência é de uma máquina local sem GPU e inclui só consulta (o
-índice é montado antes); o p95 de poucas dezenas de amostras é ruidoso. O CI continua com `hash`.
+índice é montado antes); mesmo com a média de 3 rodadas o p95 tem ruído (desvio de 1 a 13 ms). O CI continua com `hash`.
 
 ## Como rodar
 
