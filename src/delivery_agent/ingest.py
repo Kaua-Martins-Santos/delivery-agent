@@ -52,7 +52,7 @@ def index_all(store: VectorStore, embedder: Embedder, restaurants: dict[str, Res
     for tenant_id in restaurants:
         chunks = load_chunks(tenant_id, data_dir)
         if chunks:
-            store.add(tenant_id, chunks, embedder.embed([c.text for c in chunks]))
+            store.add(tenant_id, chunks, embedder.embed_documents([c.text for c in chunks]))
             total += len(chunks)
     return total
 

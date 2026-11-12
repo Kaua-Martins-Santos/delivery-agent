@@ -13,7 +13,7 @@ TENANTS = ["cantina-nonna", "sushi-kaze", "burguer-do-ze"]
 @pytest.mark.parametrize("tenant", TENANTS)
 def test_busca_so_retorna_chunks_do_proprio_tenant(agent, tenant):
     for pergunta in ["cupom de desconto", "horário", "taxa de entrega", "temaki", "lasanha", "smash"]:
-        vec = agent.embedder.embed([pergunta])[0]
+        vec = agent.embedder.embed_query([pergunta])[0]
         hits = agent.store.search(tenant, vec, k=10)
         assert hits, "deveria recuperar algo"
         assert all(h.chunk.tenant_id == tenant for h in hits)

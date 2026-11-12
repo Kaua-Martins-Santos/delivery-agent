@@ -78,6 +78,33 @@ As 2 falhas do baseline são instrutivas: busca lexical não liga *"até que hor
 que não sabe. É exatamente o que embeddings semânticos e um LLM de verdade devem resolver, e os evals
 medem se resolvem.
 
+## Comparação de embeddings
+
+Mesmos 40 casos, `LLM_PROVIDER=fake`, mudando só o `EMBEDDER` (`top_k=4`, store em memória).
+Relatórios completos em [`evals/reports/`](evals/reports/) (`latest-fake-<embedder>.md`).
+
+| Embedder | Acerto | Recall@k | Vazamentos | Latência p95 |
+|---|---|---|---|---|
+| `hash` (n-gramas, baseline do CI) | 95% (38/40) | 95% | 0 | 1,1 ms |
+| `local` (paraphrase-multilingual-MiniLM-L12-v2) | 92% (37/40) | 90% | 0 | 47,5 ms |
+| `e5` (intfloat/multilingual-e5-small) | 95% (38/40) | **100%** | 0 | 111,3 ms |
+
+Rodar: `pip install -e ".[embeddings]"` e `EMBEDDER=e5 python -m evals.run_evals`.
+O E5 usa o prefixo `query: ` nas perguntas e `passage: ` nos documentos (`embed_query` / `embed_documents`).
+
+**O caso `faq-20` ("até que horas fica aberto") NÃO passou em nenhum dos três.**
+
+- Com `hash`, a recuperação falha (nenhuma fonte volta).
+- Com `local` e `e5`, a recuperação **acerta** (`faq.md#horario-de-funcionamento` vem em 1º lugar),
+  mas o caso continua reprovado: quem monta a resposta é o LLM fake, que escolhe frases por
+  similaridade de hashing e não encontra a frase do horário. Ou seja, o gargalo deixou de ser a busca.
+- Só um LLM de verdade deve fechar esse caso. Esta comparação mede a **recuperação**, não a resposta final.
+
+Outras observações: o `e5` é o único com recall@k de 100%; o `local` piorou o recall (`faq-06` e
+`faq-11` perderam a fonte) e o `esc-03` ("estacionamento") continua sendo respondido errado pelo
+extrator fake em `hash` e `e5`. A latência é de uma máquina local sem GPU e inclui só consulta (o
+índice é montado antes); o p95 de poucas dezenas de amostras é ruidoso. O CI continua com `hash`.
+
 ## Como rodar
 
 Requer Python 3.11+.

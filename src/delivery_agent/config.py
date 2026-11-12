@@ -27,7 +27,7 @@ class Settings:
     llm_provider: str          # fake | anthropic | openai
     llm_model: str
     openai_base_url: str | None
-    embedder: str              # hash | local
+    embedder: str              # hash | local | e5
     store: str                 # memory | postgres
     database_url: str | None
     top_k: int

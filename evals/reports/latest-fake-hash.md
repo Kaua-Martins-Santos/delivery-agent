@@ -1,7 +1,7 @@
 # Relatório de avaliação
 
 Modelo: `fake-extrativo` · Embeddings: `hash-ngram` · Store: `InMemoryStore` · top_k=4
-Gerado em 2026-11-01 01:21
+Gerado em 2026-11-11 18:23
 
 | Métrica | Valor |
 |---|---|
@@ -12,7 +12,7 @@ Gerado em 2026-11-01 01:21
 | Bloqueio de prompt injection | 100% |
 | Mascaramento de dados pessoais | 100% |
 | **Casos com vazamento entre restaurantes** | **0** |
-| Latência p50 / p95 | 1.1 ms / 2.3 ms |
+| Latência p50 / p95 | 0.5 ms / 1.1 ms |
 | Tokens (total) | 15632 |
 | Custo total | US$ 0.0 |
 | Fidelidade média (LLM-as-judge, 1–5) | — |

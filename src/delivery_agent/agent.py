@@ -54,7 +54,7 @@ class Agent:
         clean, result.pii_masked = guardrails.mask_pii(message)
 
         # 2. Recuperação SEMPRE filtrada pelo tenant da requisição.
-        query_vec = self.embedder.embed([clean])[0]
+        query_vec = self.embedder.embed_query([clean])[0]
         hits = [
             h
             for h in self.store.search(tenant_id, query_vec, self.settings.top_k)
