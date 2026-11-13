@@ -9,7 +9,9 @@ guardrails e uma suíte de **evals** que roda no CI e **bloqueia o merge se houv
 > responder com o cupom, o cardápio ou o pedido de **outro** restaurante é um incidente.
 > Este projeto trata isolamento como requisito de arquitetura, não como instrução no prompt.
 
-<!-- Grave com: python -m delivery_agent.cli --tenant cantina-nonna --debug -->
+[![Dataset no Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20dataset-delivery--agent--evals-yellow)](https://huggingface.co/datasets/Martinsk123/delivery-agent-evals)
+
+<!-- Depois de gravar o GIF da demo (veja a seção "Demo"), salve em docs/demo.gif e descomente: -->
 <!-- ![demo](docs/demo.gif) -->
 
 ## O que ele faz
@@ -59,6 +61,9 @@ python -m evals.run_evals --judge    # + LLM-as-judge de fidelidade (com LLM rea
 
 40 casos em [`evals/datasets/golden.jsonl`](evals/datasets/golden.jsonl), divididos em 7 categorias:
 FAQ, pedido, **isolamento**, **prompt injection**, fora de escopo, atendente humano e dados pessoais.
+O dataset também está no Hugging Face:
+[Martinsk123/delivery-agent-evals](https://huggingface.co/datasets/Martinsk123/delivery-agent-evals)
+(`load_dataset("Martinsk123/delivery-agent-evals", split="test")`; publicado com `scripts/publish_dataset.py`).
 
 Além do que cada caso pede, **toda resposta é varrida** em busca de termos exclusivos dos outros
 restaurantes (cupons, pratos-assinatura). Um único vazamento reprova o CI.
@@ -112,6 +117,26 @@ Outras observações: o `e5` é o único com recall@k de 100%; o `local` piorou 
 extrator fake em `hash` e `e5`. A latência é de uma máquina local sem GPU e inclui só consulta (o
 índice é montado antes); mesmo com a média de 3 rodadas o p95 tem ruído (desvio de 1 a 13 ms). O CI continua com `hash`.
 
+## Demo
+
+Uma demo em [Gradio](https://www.gradio.app) com o chat, a escolha de restaurante e o painel **Por dentro**
+(fontes recuperadas, guardrail e ferramenta chamada), com botões de exemplo: pergunta normal, status de
+pedido, prompt injection e tentativa de pegar o cupom de **outro** restaurante.
+
+```bash
+pip install -r space/requirements.txt gradio
+python space/app.py                 # abre em http://localhost:7860
+```
+
+Padrão: LLM fake + embeddings `e5` (grátis, em CPU; o primeiro uso baixa o modelo).
+Use `EMBEDDER=hash python space/app.py` para não baixar nada. Com `GROQ_API_KEY` definida, a demo usa a
+Groq pelo adaptador OpenAI-compatível.
+
+<!-- ![demo](docs/demo.gif) -->
+
+> **Hugging Face Spaces:** a pasta `space/` está pronta para um Space (`python scripts/deploy_space.py`),
+> mas Gradio no plano gratuito do Hugging Face exige a assinatura PRO. Por isso a demo roda localmente.
+
 ## Como rodar
 
 Requer Python 3.11+.
@@ -164,6 +189,9 @@ src/delivery_agent/
   llm/             adaptadores: fake, anthropic, openai-compatível
   embeddings.py    hashing (baseline) e sentence-transformers
   api.py · cli.py · ingest.py
+space/             demo em Gradio (app.py, requirements.txt, README do Space)
+scripts/           deploy_space.py e publish_dataset.py (Hugging Face)
+notebooks/         benchmark de embeddings para o Kaggle
 evals/             dataset dourado + runner + relatórios
 tests/             unitários, API, adaptadores e integração do RLS
 db/init.sql        schema com Row-Level Security
