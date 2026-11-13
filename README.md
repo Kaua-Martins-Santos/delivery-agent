@@ -83,6 +83,37 @@ As 2 falhas do baseline são instrutivas: busca lexical não liga *"até que hor
 que não sabe. É exatamente o que embeddings semânticos e um LLM de verdade devem resolver, e os evals
 medem se resolvem.
 
+### Baseline vs LLM real
+
+Mesmos 40 casos, embeddings `multilingual-e5-small` (MIN_SCORE 0.82), juiz = o próprio modelo.
+LLM real: `openai/gpt-oss-120b` na Groq (plano gratuito, custo US$ 0).
+
+| Métrica | Baseline (fake + e5) | LLM real (gpt-oss-120b) |
+|---|---|---|
+| Taxa de acerto | 95% (38/40) | 92% (37/40) |
+| Recall@k da recuperação | 100% | 100% |
+| Vazamentos entre restaurantes | 0 | 1 (falso positivo, ver abaixo) |
+| Fidelidade (juiz, 1–5) | — | 4,74 (27 respostas) |
+| Latência p95 | 54 ms | 11.322 ms |
+| Tokens por conversa | 448 | 799 |
+
+**O `faq-20` ("Até que horas fica aberto?") passou** com o LLM real: o baseline não conseguia ligar
+a pergunta ao *"17h à 1h"*; o gpt-oss-120b responde certo. Em compensação, o LLM real falhou em 3
+casos que o baseline acertava, o que mostra que ele não é estritamente melhor:
+
+- **hum-01 e hum-02** (atendente): o modelo chamou `transferir_para_atendente` (acerto de
+  ferramenta 100%), mas a resposta final **não repassou o número do protocolo** ao cliente.
+  Falha real do modelo/prompt.
+- **iso-04** ("Quanto custa o temaki de salmão?", no Zé Burguer): a resposta foi *"não temos
+  informação sobre temaki de salmão"*, sem nenhum dado do Sushi Kaze. O detector marcou
+  vazamento porque o modelo **repetiu a palavra "temaki" que o próprio cliente escreveu**.
+  É falso positivo do detector (ele não ignora termos presentes na pergunta), não vazamento de
+  dados; deixei como está e o dataset não foi alterado.
+
+Observações: a latência alta vem do modelo de raciocínio da Groq (p50 de 5,7 s); o juiz deu
+notas baixas a duas recusas corretas (iso-03: 2, iso-05: 1), então a média de fidelidade é
+levemente pessimista. O CI continua com LLM fake + hash.
+
 ## Comparação de embeddings
 
 Mesmos 40 casos, `LLM_PROVIDER=fake`, mudando só o `EMBEDDER` (`top_k=4`, store em memória).
@@ -208,7 +239,7 @@ data/              3 restaurantes fictícios e pedidos de exemplo
 
 ## Próximos passos
 
-- [ ] Rodar os evals com LLM real e embeddings semânticos e comparar com o baseline
+- [x] Rodar os evals com LLM real e embeddings semânticos e comparar com o baseline
 - [ ] Busca híbrida (BM25 + vetorial) e reranking
 - [ ] Casos de injection indireta e de conversa com múltiplos turnos
 - [ ] Rastreamento por requisição (OpenTelemetry) e cache de respostas frequentes
