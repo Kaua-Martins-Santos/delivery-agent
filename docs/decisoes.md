@@ -49,3 +49,30 @@ permite medir recall da recuperação nos evals.
 O baseline por hashing e o modelo `paraphrase-multilingual-MiniLM-L12-v2` geram 384 dimensões.
 Assim a mesma coluna `vector(384)` serve para os dois, e o modelo é pequeno o bastante para rodar
 em CPU, sem custo.
+
+## 8. MIN_SCORE calibrado por embedder
+
+**Contexto:** cada modelo de embedding tem sua escala de similaridade. Com o e5 todos os trechos
+pontuam entre 0,84 e 0,89, então o `MIN_SCORE=0.12` herdado do hash não filtrava nada: o LLM
+recebia sempre `top_k` trechos, inclusive irrelevantes (mais tokens e mais ruído).
+
+**Método:** `scripts/calibra_min_score.py` roda os 40 casos com LLM fake para vários limites. O
+recall@k é medido **depois** do filtro (`r.sources` em `agent.py` só contém os trechos aprovados),
+então um limite alto demais derruba o recall de verdade, e a medida é honesta.
+
+| Embedder | Limite | recall@k | acerto | trechos/pergunta |
+|---|---|---|---|---|
+| hash | 0.05 | 95% | 95% | 2.77 |
+| hash | **0.10** | **95%** | **95%** | **1.77** |
+| hash | 0.15 | 90% | 92,5% | 1.18 |
+| e5 | 0.80 | 100% | 95% | 3.50 |
+| e5 | **0.82** | **100%** | **95%** | **2.95** |
+| e5 | 0.84 | 95% | 95% | 1.88 |
+| e5 | 0.86 | 85% | 90% | 0.95 |
+
+**Decisão:** o maior limite que mantém o recall máximo: **hash/local 0.10** e **e5 0.82**. Ficam
+como padrão em `config.py`; a variável `MIN_SCORE` do `.env` continua sobrescrevendo.
+
+**Ressalva:** o conjunto tem só 40 casos, então a calibração é grosseira (o e5 cai de 100% para
+95% já em 0.84). Por isso escolhi o limite na borda segura, e não o que maximiza economia.
+O `local` (MiniLM) usa o mesmo valor do hash por falta de medição própria.

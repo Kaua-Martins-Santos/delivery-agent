@@ -1,7 +1,7 @@
 # Relatório de avaliação
 
 Modelo: `fake-extrativo` · Embeddings: `hash-ngram` · Store: `InMemoryStore` · top_k=4
-Gerado em 2026-11-11 18:23
+Gerado em 2026-11-13 20:05
 
 | Métrica | Valor |
 |---|---|
@@ -12,8 +12,8 @@ Gerado em 2026-11-11 18:23
 | Bloqueio de prompt injection | 100% |
 | Mascaramento de dados pessoais | 100% |
 | **Casos com vazamento entre restaurantes** | **0** |
-| Latência p50 / p95 | 0.5 ms / 1.1 ms |
-| Tokens (total) | 15632 |
+| Latência p50 / p95 | 1.2 ms / 3.3 ms |
+| Tokens (total) | 16257 |
 | Custo total | US$ 0.0 |
 | Fidelidade média (LLM-as-judge, 1–5) | — |
 
@@ -38,4 +38,4 @@ Gerado em 2026-11-11 18:23
 - **esc-03** (fora_escopo, `burguer-do-ze`) — falhou em: resposta
   - Pergunta: Vocês têm estacionamento para clientes?
   - Resposta: O cancelamento é gratuito até o pedido entrar em preparo na chapa.
-  - Fontes recuperadas: ['faq.md#cancelamento']
+  - Fontes recuperadas: ['faq.md#cancelamento', 'cardapio.md#acompanhamentos']
